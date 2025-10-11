@@ -2,7 +2,7 @@
   "expo": {
     "name": "Inclusive Health Match",
     "slug": "inclusive-health-match",
-    "version": "1.0.22",
+    "version": "1.0.23",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "inclusivehealthmatch",
@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.inclusivehealthmatch.app",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "This app uses your photo library so you can upload a profile photo.",
         "NSCameraUsageDescription": "This app may use your camera to capture a profile photo.",
@@ -30,14 +30,16 @@
 
     "android": {
       "package": "com.inclusivehealthmatch.app",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#10B981"
       }
     },
 
-    "web": { "favicon": "./assets/favicon.png" },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
 
     "plugins": [
       [
@@ -51,9 +53,14 @@
     "updates": {
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 0
-    }
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/d20793fc-6318-471f-96a9-73ed69c0f848"
+    },
 
-    /* EAS will add `extra.eas.projectId` and `updates.url` during `eas init` */
+    "extra": {
+      "eas": {
+        "projectId": "d20793fc-6318-471f-96a9-73ed69c0f848"
+      }
+    }
   }
 }
