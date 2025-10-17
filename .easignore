@@ -2,3 +2,6 @@ ios/**
 android/**
 .expo/**
 *.log
+
+# ignore editor backups
+*.bak
