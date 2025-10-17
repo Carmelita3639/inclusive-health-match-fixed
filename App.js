@@ -14,7 +14,7 @@ import CulturalCalendar from './js/components/CulturalCalendar';
 import ProfileScreen from './js/components/ProfileScreen';
 
 // Import AuthProvider
-import { AuthProvider } from './AuthContext';
+import { AuthProvider } from './js/AuthContext';
 
 const Stack = createNativeStackNavigator();
 
