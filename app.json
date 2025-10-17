@@ -44,19 +44,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-asset",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static"
-          },
-          "android": {}
-        }
-      ],
-      "expo-font"
-    ],
     "runtimeVersion": "1.0.22",
     "updates": {
       "enabled": true,
