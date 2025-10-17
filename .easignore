@@ -5,3 +5,6 @@ android/**
 
 # ignore editor backups
 *.bak
+
+# ignore editor backups
+*.bak
