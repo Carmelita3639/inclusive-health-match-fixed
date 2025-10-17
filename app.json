@@ -55,9 +55,7 @@
         }
       ]
     ],
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
+    "runtimeVersion": "1.0.22",
     "updates": {
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
