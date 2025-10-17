@@ -3,22 +3,23 @@
     "name": "Inclusive Health Match",
     "slug": "inclusive-health-match",
     "owner": "whitecoat25",
-
     "version": "1.0.22",
     "orientation": "portrait",
     "scheme": "inclusivehealthmatch",
     "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "light",
-
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#10B981"
     },
-
-    "assetBundlePatterns": ["**/*"],
-    "platforms": ["ios", "android"],
-
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.inclusivehealthmatch.app",
@@ -28,9 +29,10 @@
         "NSCameraUsageDescription": "This app may use your camera to capture a profile photo.",
         "NSUserTrackingUsageDescription": "We use this identifier to support subscriptions and product analytics."
       },
-      "config": { "usesNonExemptEncryption": false }
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
-
     "android": {
       "package": "com.inclusivehealthmatch.app",
       "versionCode": 4,
@@ -39,33 +41,32 @@
         "backgroundColor": "#10B981"
       }
     },
-
     "web": {
       "favicon": "./assets/favicon.png"
     },
-
     "plugins": [
       [
         "expo-build-properties",
         {
-          "ios": { "useFrameworks": "static" },
+          "ios": {
+            "useFrameworks": "static"
+          },
           "android": {}
         }
       ]
     ],
-
-    "runtimeVersion": { "policy": "sdkVersion" },
-
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
     "updates": {
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/d20793fc-6318-471f-96a9-73ed69c0f848"
+      "url": "https://u.expo.dev/d20793fc-6318-471f-96a9-73ed69c0fd48"
     },
-
     "extra": {
       "eas": {
-        "projectId": "d20793fc-6318-471f-96a9-73ed69c0f848"
+        "projectId": "d20793fc-6318-471f-96a9-73ed69c0fd48"
       }
     }
   }
