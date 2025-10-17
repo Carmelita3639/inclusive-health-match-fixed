@@ -62,11 +62,11 @@
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/d20793fc-6318-471f-96a9-73ed69c0f848"
+      "url": "https://u.expo.dev/d20793fc-6318-471f-96a9-73ed69c0fd48"
     },
     "extra": {
       "eas": {
-        "projectId": "d20793fc-6318-471f-96a9-73ed69c0f848"
+        "projectId": "d20793fc-6318-471f-96a9-73ed69c0fd48"
       }
     }
   }
