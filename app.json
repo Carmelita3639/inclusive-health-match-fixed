@@ -2,10 +2,12 @@
   "expo": {
     "name": "Inclusive Health Match",
     "slug": "inclusive-health-match",
-    "version": "1.0.23",
+    "owner": "whitecoat25",
+
+    "version": "1.0.22",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "scheme": "inclusivehealthmatch",
+    "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "light",
 
     "splash": {
@@ -15,6 +17,7 @@
     },
 
     "assetBundlePatterns": ["**/*"],
+    "platforms": ["ios", "android"],
 
     "ios": {
       "supportsTablet": true,
@@ -44,7 +47,10 @@
     "plugins": [
       [
         "expo-build-properties",
-        { "ios": { "useFrameworks": "static" }, "android": {} }
+        {
+          "ios": { "useFrameworks": "static" },
+          "android": {}
+        }
       ]
     ],
 
