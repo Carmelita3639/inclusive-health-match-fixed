@@ -1,6 +1,6 @@
 // AuthContext.js — keeps isPremium in context with push-style RevenueCat updates
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import RevenueCatService from './revenuecat';
+import RevenueCatService from '../revenuecat';
 
 const AuthContext = createContext(null);
 
