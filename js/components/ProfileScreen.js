@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../AuthContext';
+import { useAuth } from '../AuthContext';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, signOut } = useAuth?.() ?? {};

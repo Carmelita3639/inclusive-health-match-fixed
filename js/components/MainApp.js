@@ -8,7 +8,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { useAuth } from '../../AuthContext';
+import { useAuth } from '../AuthContext';
 
 
 const MainApp = ({ navigation }) => {

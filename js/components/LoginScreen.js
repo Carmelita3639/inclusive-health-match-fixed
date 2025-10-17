@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 
 // ---- Auth hook (root-level) ----
-import { useAuth } from '../../AuthContext'; // <-- adjust if your path differs
+import { useAuth } from '../AuthContext'; // <-- adjust if your path differs
 
 // ---- Optional Supabase (only used for magic link button) ----
 let supabase = null;

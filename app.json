@@ -44,17 +44,29 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [],
+    "plugins": [
+      "expo-asset",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          },
+          "android": {}
+        }
+      ],
+      "expo-font"
+    ],
     "runtimeVersion": "1.0.22",
     "updates": {
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/d20793fc-6318-471f-96a9-73ed69c0fd48"
+      "url": "https://u.expo.dev/d20793fc-6318-471f-96a9-73ed69c0f848"
     },
     "extra": {
       "eas": {
-        "projectId": "d20793fc-6318-471f-96a9-73ed69c0fd48"
+        "projectId": "d20793fc-6318-471f-96a9-73ed69c0f848"
       }
     }
   }

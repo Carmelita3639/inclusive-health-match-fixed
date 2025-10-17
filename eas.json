@@ -1,21 +1,54 @@
 {
-    "cli": { "version": ">= 13.0.0" },
-    "build": {
-      "development": {
-        "developmentClient": true,
-        "distribution": "internal",
-        "channel": "development",
-        "ios": { "autoIncrement": "buildNumber" }
+  "cli": {
+    "version": ">= 13.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "android": {
+        "buildType": "apk"
       },
-      "preview": {
-        "distribution": "internal",
-        "channel": "preview",
-        "ios": { "autoIncrement": "buildNumber" }
+      "ios": {
+        "autoIncrement": "buildNumber",
+        "simulator": true
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "android": {
+        "buildType": "apk"
       },
-      "production": {
-        "channel": "production",
-        "ios": { "autoIncrement": "buildNumber" }
+      "ios": {
+        "autoIncrement": "buildNumber"
+      }
+    },
+    "production": {
+      "channel": "production",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "simulator": false,
+        "autoIncrement": "buildNumber"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./android-service-account.json",
+        "track": "internal"
+      },
+      "ios": {
+        "appleId": "durranau@yahoo.com",
+        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID",
+        "appleTeamId": "YOUR_TEAM_ID"
       }
     }
   }
-  
+}

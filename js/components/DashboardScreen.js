@@ -1,7 +1,7 @@
 // js/components/DashboardScreen.js - Updated with RevenueCat
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
-import { useAuth } from '../../AuthContext';
+import { useAuth } from '../AuthContext';
 
 export default function DashboardScreen({ navigation }) {
   const { user, signOut, isPremium } = useAuth();
