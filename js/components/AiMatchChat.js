@@ -1,648 +1,685 @@
 // js/components/AiMatchChat.js
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
   ScrollView,
+  StyleSheet,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Sample provider data for when Supabase isn't configured
-const sampleProviders = [
-  {
-    npi: '1234567890',
-    first_name: 'HAYDEE C.',
-    last_name: 'BROWN',
-    speciality: 'Foot and Ankle Surgery, Orthopaedic Surgery',
-    gender: 'Female',
-    cultural_identifiers: 'African-American',
-    languages: ['English'],
-    is_verified: true,
-    lgbtq_affirming: false,
-    board_certified: true,
-    address: '40 Park Ave Ste 1, New York, NY 10016',
-    phone: '646-455-1584',
-  },
-  {
-    npi: '0987654321',
-    first_name: 'ZOE B.',
-    last_name: 'CHEUNG',
-    speciality: 'Orthopaedic Trauma, Orthopaedic Surgery',
-    gender: 'Female',
-    cultural_identifiers: 'Asian',
-    languages: ['English', 'Chinese'],
-    is_verified: true,
-    lgbtq_affirming: false,
-    board_certified: true,
-    address: '3333 Hylan Blvd., Staten Island, NY 10306',
-    phone: '718-667-3333',
+import { getMergedProviders } from '../lib/providerData';
+
+const GREEN_BG = '#0F766E';
+const GREEN = '#10B981';
+const GREEN_SOFT = '#D1FAE5';
+const GRAY_900 = '#111827';
+const GRAY_800 = '#1F2937';
+const GRAY_700 = '#374151';
+const GRAY_600 = '#4B5563';
+const GRAY_200 = '#E5E7EB';
+const CARD_BG = '#FFFFFF';
+const BG = '#F7F8FA';
+const BLUE_600 = '#1D4ED8';
+
+export default function AiMatchChat() {
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+
+  const [query, setQuery] = useState(
+    'Black female pediatric surgeon'
+  );
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // naive parser to pull what user wants
+  async function runMatch() {
+    setLoading(true);
+
+    // extremely rough parse:
+    // We'll look for words like "black", "female", "pediatric", etc.
+    const qLower = query.toLowerCase();
+
+    const genderGuess = qLower.includes('female')
+      ? 'F'
+      : qLower.includes('male')
+      ? 'M'
+      : '';
+
+    // We'll pass specialtyGuess into getMergedProviders
+    // "pediatric surgeon" -> "Pediatric"
+    let specialtyGuess = '';
+    if (qLower.includes('pediatric')) {
+      specialtyGuess = 'Pediatric';
+    } else if (qLower.includes('obgyn')) {
+      specialtyGuess = 'Obstetrics';
+    } else if (qLower.includes('psychi')) {
+      specialtyGuess = 'Psych';
+    }
+
+    // name + state are not known here
+    try {
+      const merged = await getMergedProviders({
+        name: '',
+        state: '',
+        specialty: specialtyGuess,
+        gender: genderGuess,
+        language: '', // not currently used in providerData.js filters
+      });
+
+      // If user said "black" or "african american", filter for those cultural tags
+      let filtered = merged;
+      if (
+        qLower.includes('black') ||
+        qLower.includes('african')
+      ) {
+        filtered = merged.filter((p) => {
+          const tags = (
+            p.cultural_identifiers || ''
+          ).toLowerCase();
+          return (
+            tags.includes('black') ||
+            tags.includes('african')
+          );
+        });
+      }
+
+      setResults(filtered);
+    } catch (err) {
+      console.log('[AiMatchChat] error:', err);
+      Alert.alert(
+        'Error',
+        'There was an issue finding matches.'
+      );
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   }
-];
 
-const AiMatchChat = ({ navigation }) => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: 'ai',
-      text: "Hello! I'm your AI health match assistant.\nTell me the competencies you need — race/culture, gender, language(s), and specialty.",
-      timestamp: new Date(),
-    }
-  ]);
-  const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [providers, setProviders] = useState([]);
-  const scrollViewRef = useRef();
-
-  // Auto scroll to bottom when messages change
-  useEffect(() => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, [messages]);
-
-  // Parse user query for search criteria
-  const parseQuery = (query) => {
-    const lowerQuery = query.toLowerCase();
-    const criteria = {
-      gender: null,
-      specialty: null,
-      cultural_identifiers: null,
-      languages: null,
-    };
-
-    // Gender matching
-    if (lowerQuery.includes('female') || lowerQuery.includes('woman')) {
-      criteria.gender = 'Female';
-    } else if (lowerQuery.includes('male') || lowerQuery.includes('man')) {
-      criteria.gender = 'Male';
-    }
-
-    // Specialty matching
-    const specialties = [
-      'orthopedic', 'orthopaedic', 'cardiology', 'dermatology', 'psychiatry', 
-      'pediatric', 'gynecology', 'oncology', 'neurology', 'surgery',
-      'family medicine', 'internal medicine', 'emergency medicine'
-    ];
-    
-    for (const specialty of specialties) {
-      if (lowerQuery.includes(specialty)) {
-        criteria.specialty = specialty;
-        break;
-      }
-    }
-
-    // Language matching
-    const languages = ['spanish', 'chinese', 'hindi', 'arabic', 'french', 'russian'];
-    for (const lang of languages) {
-      if (lowerQuery.includes(lang)) {
-        criteria.languages = lang;
-        break;
-      }
-    }
-
-    // Cultural identifiers
-    const cultures = ['black', 'african american', 'hispanic', 'latino', 'asian', 'native american', 'middle eastern'];
-    for (const culture of cultures) {
-      if (lowerQuery.includes(culture)) {
-        criteria.cultural_identifiers = culture;
-        break;
-      }
-    }
-
-    return criteria;
-  };
-
-  // Search providers (using sample data)
-  const searchProviders = (criteria) => {
-    let filtered = sampleProviders;
-
-    // Apply filters based on criteria
-    if (criteria.gender) {
-      filtered = filtered.filter(p => 
-        p.gender && p.gender.toLowerCase().includes(criteria.gender.toLowerCase())
+  function handleUpdateProfile(providerObj) {
+    if (!providerObj?.npi) {
+      Alert.alert(
+        'Error',
+        'This provider has no NPI on file. Cannot open Update Profile.'
       );
+      return;
     }
+    navigation.navigate('UpdateProfile', {
+      provider: {
+        npi: providerObj.npi,
+        fullName: providerObj.fullName || '',
+        specialty: providerObj.specialty || '',
+        phone: providerObj.phone || '',
+        address: providerObj.address || '',
+        email: providerObj.email || '',
+        gender: providerObj.gender || '',
+        languages: providerObj.languages || [],
+        cultural_identifiers:
+          providerObj.cultural_identifiers || '',
+        board_certified: !!providerObj.board_certified,
+        lgbtq_affirming: !!providerObj.lgbtq_affirming,
+        bio: providerObj.bio || '',
+        claimed: !!providerObj.claimed,
+        verified: !!providerObj.verified,
+        profileData: providerObj.profileDataRaw || {},
+      },
+    });
+  }
 
-    if (criteria.specialty) {
-      filtered = filtered.filter(p => 
-        p.speciality && p.speciality.toLowerCase().includes(criteria.specialty.toLowerCase())
+  function handleViewDetails(providerObj) {
+    if (!providerObj?.npi) {
+      Alert.alert(
+        'Coming Soon',
+        'Provider details require an NPI.'
       );
+      return;
     }
 
-    if (criteria.cultural_identifiers) {
-      filtered = filtered.filter(p => 
-        p.cultural_identifiers && p.cultural_identifiers.toLowerCase().includes(criteria.cultural_identifiers.toLowerCase())
-      );
-    }
+    navigation.navigate('ProviderCard', {
+      provider: {
+        npi: providerObj.npi,
+        fullName: providerObj.fullName || '',
+        specialty: providerObj.specialty || '',
+        phone: providerObj.phone || '',
+        address: providerObj.address || '',
+        email: providerObj.email || '',
+        gender: providerObj.gender || '',
+        languages: providerObj.languages || [],
+        cultural_identifiers:
+          providerObj.cultural_identifiers || '',
+        board_certified: !!providerObj.board_certified,
+        lgbtq_affirming: !!providerObj.lgbtq_affirming,
+        bio: providerObj.bio || '',
+        claimed: !!providerObj.claimed,
+        verified: !!providerObj.verified,
+        profileData: providerObj.profileDataRaw || {},
+      },
+    });
+  }
 
-    if (criteria.languages) {
-      filtered = filtered.filter(p => 
-        p.languages && p.languages.some(lang => 
-          lang.toLowerCase().includes(criteria.languages.toLowerCase())
-        )
-      );
-    }
-
-    return filtered;
-  };
-
-  // Handle sending messages
-  const handleSend = async () => {
-    if (!inputText.trim()) return;
-
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      text: inputText,
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    const currentInput = inputText;
-    setInputText('');
-    setIsLoading(true);
-
-    // Parse the query and search for providers
-    const criteria = parseQuery(currentInput);
-    const foundProviders = searchProviders(criteria);
-
-    // Generate AI response
-    let aiResponse = '';
-    if (foundProviders.length > 0) {
-      aiResponse = `I found ${foundProviders.length} healthcare provider${foundProviders.length > 1 ? 's' : ''} that match your criteria. Here are the results:`;
-      setProviders(foundProviders);
-    } else {
-      aiResponse = "I couldn't find any providers that exactly match your criteria. Let me know if you'd like to try different search terms or expand your search parameters.";
-      setProviders([]);
-    }
-
-    const aiMessage = {
-      id: Date.now() + 1,
-      type: 'ai',
-      text: aiResponse,
-      timestamp: new Date(),
-    };
-
-    setTimeout(() => {
-      setMessages(prev => [...prev, aiMessage]);
-      setIsLoading(false);
-    }, 1000);
-  };
-
-  // Quick response buttons
-  const handleQuickResponse = (responseText) => {
-    setInputText(responseText);
-  };
-
-  // Clear chat
-  const clearChat = () => {
-    setMessages([
-      {
-        id: 1,
-        type: 'ai',
-        text: "Hello! I'm your AI health match assistant.\nTell me the competencies you need — race/culture, gender, language(s), and specialty.",
-        timestamp: new Date(),
-      }
-    ]);
-    setProviders([]);
-    setInputText('');
-  };
-
-  // Render provider cards
-  const renderProviders = () => {
-    if (providers.length === 0) return null;
+  function renderProviderCard(p, idx) {
+    const chipList = buildChips({
+      gender: p.gender,
+      languages: p.languages,
+      cultural_identifiers: p.cultural_identifiers,
+      lgbtq_affirming: p.lgbtq_affirming,
+      board_certified: p.board_certified,
+    });
 
     return (
-      <View style={styles.providersContainer}>
-        {providers.map((provider, index) => (
-          <View key={provider.npi} style={styles.providerCard}>
-            <Text style={styles.providerName}>
-              {provider.first_name} {provider.last_name}, M.D.
-            </Text>
-            
-            <View style={styles.providerInfo}>
-              <Ionicons name="medical" size={16} color="#6B7280" />
-              <Text style={styles.providerSpecialty}>
-                Specialty: {provider.speciality}
-              </Text>
-            </View>
-
-            {provider.address && (
-              <View style={styles.providerInfo}>
-                <Ionicons name="location-outline" size={16} color="#6B7280" />
-                <Text style={styles.providerAddress}>{provider.address}</Text>
-              </View>
-            )}
-
-            {provider.phone && (
-              <View style={styles.providerInfo}>
-                <Ionicons name="call-outline" size={16} color="#6B7280" />
-                <Text style={styles.providerPhone}>{provider.phone}</Text>
-              </View>
-            )}
-
-            <View style={styles.providerTags}>
-              {provider.gender && (
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>{provider.gender}</Text>
-                </View>
-              )}
-              {provider.languages && provider.languages.length > 0 && (
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>
-                    {provider.languages.join(', ')}
-                  </Text>
-                </View>
-              )}
-              {provider.cultural_identifiers && (
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>{provider.cultural_identifiers}</Text>
-                </View>
-              )}
-              {provider.is_verified && (
-                <View style={[styles.tag, styles.verifiedTag]}>
-                  <Text style={[styles.tagText, styles.verifiedTagText]}>Verified</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        ))}
-      </View>
-    );
-  };
-
-  // Render chat messages
-  const renderMessage = (message) => {
-    const isUser = message.type === 'user';
-    
-    return (
-      <View key={message.id} style={[
-        styles.messageContainer,
-        isUser ? styles.userMessage : styles.aiMessage
-      ]}>
-        <Text style={[
-          styles.messageText,
-          isUser ? styles.userMessageText : styles.aiMessageText
-        ]}>
-          {message.text}
+      <View key={p.npi || idx} style={styles.card}>
+        <Text style={styles.cardName}>
+          {p.fullName || 'UNKNOWN PROVIDER'}
         </Text>
+
+        <View style={styles.chipRow}>
+          {chipList}
+        </View>
+
+        {/* Specialty */}
+        {!!p.specialty && (
+          <Line icon="medkit-outline">
+            <Text>
+              <Text style={styles.bold}>
+                Specialty:{' '}
+              </Text>
+              {p.specialty}
+            </Text>
+          </Line>
+        )}
+
+        {/* Address */}
+        {!!p.address && (
+          <Line icon="location-outline">
+            <Text>{p.address}</Text>
+          </Line>
+        )}
+
+        {/* Phone */}
+        {!!p.phone && (
+          <Line icon="call-outline">
+            <Text>{p.phone}</Text>
+          </Line>
+        )}
+
+        {/* Email */}
+        {!!p.email && (
+          <Line icon="mail-outline">
+            <Text>{p.email}</Text>
+          </Line>
+        )}
+
+        {/* Verified pill */}
+        {p.verified && (
+          <View
+            style={[
+              styles.verifiedPill,
+              { marginTop: 12 },
+            ]}
+          >
+            <Ionicons
+              name="checkmark-circle"
+              size={16}
+              color={GREEN}
+            />
+            <Text style={styles.verifiedText}>
+              Verified
+            </Text>
+          </View>
+        )}
+
+        {/* Actions */}
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            onPress={() => handleViewDetails(p)}
+            style={[
+              styles.actionBtn,
+              styles.btnOutline,
+            ]}
+          >
+            <Text style={styles.btnOutlineText}>
+              View Details
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => handleUpdateProfile(p)}
+            style={[
+              styles.actionBtn,
+              styles.btnPrimary,
+            ]}
+          >
+            <Text style={styles.btnPrimaryText}>
+              Update Profile
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
-  };
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View
+      style={[
+        styles.root,
+        { paddingTop: insets.top },
+      ]}
+    >
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
+        <TouchableOpacity
+          onPress={() => {
+            try {
+              navigation.goBack();
+            } catch (e) {
+              // it's safe if no back stack
+            }
+          }}
+          hitSlop={{
+            top: 20,
+            bottom: 20,
+            left: 20,
+            right: 20,
+          }}
         >
-          <Ionicons name="arrow-back" size={24} color="white" />
-          <Text style={styles.backText}>Back</Text>
+          <Ionicons
+            name="chevron-back"
+            size={24}
+            color="#fff"
+          />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>AI Health Match Assistant</Text>
-          <Text style={styles.headerSubtitle}>Verified profiles appear first.</Text>
+
+        <View style={{ flex: 1, marginLeft: 8 }}>
+          <Text style={styles.headerTitle}>
+            AI Health Match Assistant
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            Verified profiles appear first.
+          </Text>
         </View>
-        <TouchableOpacity onPress={clearChat} style={styles.clearButton}>
-          <Ionicons name="refresh-outline" size={20} color="white" />
-        </TouchableOpacity>
       </View>
 
-      {/* Chat Messages */}
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.chatContainer}
-        contentContainerStyle={styles.chatContent}
-      >
-        {messages.map(renderMessage)}
-        
-        {providers.length > 0 && renderProviders()}
-        
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#10B981" />
-            <Text style={styles.loadingText}>Processing your request...</Text>
-          </View>
-        )}
+      {/* Prompt helper */}
+      <View style={styles.coachingBox}>
+        <Text style={styles.coachingText}>
+          Tell me the competencies you need —{' '}
+          <Text style={styles.coachingBold}>
+            race/culture, gender, language(s),
+            and specialty.
+          </Text>
+        </Text>
+      </View>
 
-        {/* Quick Response Button */}
-        {messages.length <= 2 && (
-          <View style={styles.quickResponseContainer}>
-            <TouchableOpacity 
-              style={styles.quickResponseButton}
-              onPress={() => handleQuickResponse('Female orthopedic surgeons')}
-            >
-              <Text style={styles.quickResponseText}>Female orthopedic surgeons</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+      {/* Query quick chip */}
+      <View style={styles.quickChip}>
+        <Text style={styles.quickChipText}>
+          Black female pediatric surgeon
+        </Text>
+      </View>
+
+      {/* Results list */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 120,
+        }}
+      >
+        {results.map(renderProviderCard)}
       </ScrollView>
 
-      {/* Input Area */}
-      <View style={styles.inputContainer}>
+      {/* Chat input bar */}
+      <View style={styles.inputBar}>
         <TextInput
-          style={styles.textInput}
-          placeholder="Ask about finding physicians..."
-          value={inputText}
-          onChangeText={setInputText}
-          multiline
-          maxLength={500}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Black female pediatric surgeon..."
+          placeholderTextColor={GRAY_600}
+          style={styles.inputField}
         />
-        <TouchableOpacity 
-          onPress={handleSend}
-          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-          disabled={!inputText.trim() || isLoading}
+
+        <TouchableOpacity
+          onPress={() => setQuery('')}
+          style={[styles.bottomBtn, styles.clearBtn]}
+          disabled={loading}
         >
-          <Ionicons name="send" size={20} color="white" />
+          <Text style={styles.clearBtnText}>
+            Clear
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={runMatch}
+          style={[styles.bottomBtn, styles.sendBtn]}
+          disabled={loading}
+        >
+          <Text style={styles.sendBtnText}>
+            {loading ? '...' : 'Send'}
+          </Text>
         </TouchableOpacity>
       </View>
-
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => navigation.navigate('Dashboard')}
-        >
-          <Text style={styles.navEmoji}>🏠</Text>
-          <Text style={styles.navText}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => navigation.navigate('ProviderSearchScreen')}
-        >
-          <Text style={styles.navEmoji}>🔍</Text>
-          <Text style={styles.navText}>Provider</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.navItem, styles.activeNavItem]}>
-          <Text style={styles.navEmoji}>💬</Text>
-          <Text style={[styles.navText, styles.activeNavText]}>AI Match</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => navigation.navigate('ProfileScreen')}
-        >
-          <Text style={styles.navEmoji}>👤</Text>
-          <Text style={styles.navText}>Profile</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => navigation.navigate('CulturalCalendar')}
-        >
-          <Text style={styles.navEmoji}>🗓️</Text>
-          <Text style={styles.navText}>Calendar</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+    </View>
   );
-};
+}
+
+/* helpers for AiMatchChat UI */
+
+function Line({ icon, children }) {
+  return (
+    <View style={styles.lineRow}>
+      <Ionicons
+        name={icon}
+        size={18}
+        color={GRAY_700}
+        style={{ marginRight: 8 }}
+      />
+      <Text style={styles.lineRowText}>
+        {children}
+      </Text>
+    </View>
+  );
+}
+
+function Chip({ text }) {
+  return (
+    <View style={styles.tagChip}>
+      <Text style={styles.tagChipText}>
+        {text}
+      </Text>
+    </View>
+  );
+}
+
+function buildChips({
+  gender,
+  languages,
+  cultural_identifiers,
+  lgbtq_affirming,
+  board_certified,
+}) {
+  const chips = [];
+
+  if (gender) {
+    chips.push(
+      <Chip key="g" text={capitalize(gender)} />
+    );
+  }
+
+  if (languages && Array.isArray(languages)) {
+    languages.forEach((lang, i) => {
+      if (lang) {
+        chips.push(
+          <Chip
+            key={`lang-${i}`}
+            text={capitalize(lang)}
+          />
+        );
+      }
+    });
+  }
+
+  if (cultural_identifiers) {
+    const parts = String(cultural_identifiers)
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    parts.forEach((p, i) => {
+      chips.push(<Chip key={`c-${i}`} text={p} />);
+    });
+  }
+
+  if (lgbtq_affirming) {
+    chips.push(
+      <Chip
+        key="lgbtq"
+        text="LGBTQ+ affirming"
+      />
+    );
+  }
+
+  if (board_certified) {
+    chips.push(
+      <Chip
+        key="board"
+        text="Board certified"
+      />
+    );
+  }
+
+  return chips;
+}
+
+function capitalize(s) {
+  if (!s) return '';
+  const lower = String(s).toLowerCase();
+  return (
+    lower.charAt(0).toUpperCase() + lower.slice(1)
+  );
+}
+
+/* styles */
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: BG,
   },
+
   header: {
-    backgroundColor: '#10B981',
+    backgroundColor: GREEN_BG,
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    paddingTop: 40,
+    paddingBottom: 12,
     flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  backText: {
-    color: 'white',
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  headerContent: {
-    flex: 1,
+    alignItems: 'flex-start',
   },
   headerTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 2,
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 20,
   },
   headerSubtitle: {
-    color: 'white',
-    fontSize: 12,
-    opacity: 0.9,
+    color: '#CFFAFE',
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 2,
   },
-  clearButton: {
-    padding: 4,
-  },
-  chatContainer: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  chatContent: {
-    padding: 16,
-  },
-  messageContainer: {
-    marginBottom: 16,
-    maxWidth: '85%',
-  },
-  userMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#10B981',
-    borderRadius: 18,
-    borderBottomRightRadius: 4,
-  },
-  aiMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderBottomLeftRadius: 4,
+
+  coachingBox: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 12,
   },
-  messageText: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+  coachingText: {
+    color: GRAY_800,
     fontSize: 16,
     lineHeight: 22,
+    fontWeight: '500',
   },
-  userMessageText: {
-    color: 'white',
+  coachingBold: {
+    fontWeight: '700',
   },
-  aiMessageText: {
-    color: '#374151',
-  },
-  quickResponseContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  quickResponseButton: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
-  },
-  quickResponseText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  providersContainer: {
-    marginTop: 16,
-  },
-  providerCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  providerName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#374151',
+
+  quickChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#D1FAE5',
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginLeft: 16,
+    marginTop: 12,
     marginBottom: 8,
   },
-  providerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
+  quickChipText: {
+    color: '#065F46',
+    fontSize: 18,
+    fontWeight: '700',
   },
-  providerSpecialty: {
-    marginLeft: 8,
-    color: '#6B7280',
-    fontSize: 14,
+
+  scroll: {
     flex: 1,
   },
-  providerAddress: {
-    marginLeft: 8,
-    color: '#6B7280',
-    fontSize: 14,
-    flex: 1,
+
+  card: {
+    backgroundColor: CARD_BG,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: GRAY_200,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
   },
-  providerPhone: {
-    marginLeft: 8,
-    color: '#6B7280',
-    fontSize: 14,
+
+  cardName: {
+    color: GRAY_900,
+    fontWeight: '900',
+    fontSize: 20,
+    marginBottom: 12,
   },
-  providerTags: {
+
+  chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 8,
+    gap: 8,
+    marginBottom: 16,
   },
-  tag: {
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 8,
-    marginBottom: 4,
+
+  lineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 6,
   },
-  tagText: {
-    color: '#6B7280',
-    fontSize: 12,
-    fontWeight: '500',
+  lineRowText: {
+    flex: 1,
+    color: GRAY_700,
+    fontSize: 15,
+    lineHeight: 20,
   },
-  verifiedTag: {
-    backgroundColor: '#DBEAFE',
-  },
-  verifiedTagText: {
-    color: '#1E40AF',
-  },
-  loadingContainer: {
+
+  verifiedPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-  },
-  loadingText: {
-    color: '#6B7280',
-    fontStyle: 'italic',
-    marginLeft: 8,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    backgroundColor: 'white',
-  },
-  textInput: {
-    flex: 1,
+    backgroundColor: GREEN_SOFT,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginRight: 8,
-    maxHeight: 100,
-    fontSize: 16,
-    backgroundColor: '#F9FAFB',
+    borderColor: '#A7F3D0',
+    alignSelf: 'flex-start',
   },
-  sendButton: {
-    backgroundColor: '#10B981',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+  verifiedText: {
+    marginLeft: 6,
+    color: GRAY_700,
+    fontWeight: '700',
+    fontSize: 14,
   },
-  sendButtonDisabled: {
-    opacity: 0.5,
-  },
-  bottomNav: {
+
+  actionsRow: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    paddingVertical: 12,
-    paddingBottom: 20,
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
   },
-  navItem: {
-    flex: 1,
+  actionBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    minWidth: 130,
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'center',
   },
-  activeNavItem: {
-    borderTopWidth: 3,
-    borderTopColor: '#10B981',
-    marginTop: -1,
+  btnOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: GRAY_200,
   },
-  navEmoji: {
-    fontSize: 24,
-    marginBottom: 4,
+  btnOutlineText: {
+    color: GRAY_700,
+    fontSize: 15,
+    fontWeight: '700',
   },
-  navText: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
+  btnPrimary: {
+    backgroundColor: GREEN,
   },
-  activeNavText: {
-    color: '#10B981',
-    fontWeight: '600',
+  btnPrimaryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
+  tagChip: {
+    backgroundColor: GRAY_200,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  tagChipText: {
+    color: GRAY_700,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  inputBar: {
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderColor: GRAY_200,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  inputField: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: GRAY_200,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: GRAY_900,
+    fontSize: 15,
+  },
+
+  bottomBtn: {
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minWidth: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clearBtn: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: GREEN,
+  },
+  clearBtnText: {
+    color: GREEN,
+    fontWeight: '800',
+    fontSize: 15,
+  },
+  sendBtn: {
+    backgroundColor: BLUE_600,
+  },
+  sendBtnText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 15,
   },
 });
-
-export default AiMatchChat;

@@ -3,7 +3,7 @@
     "name": "Inclusive Health Match",
     "slug": "inclusive-health-match",
     "owner": "whitecoat25",
-    "version": "1.0.22",
+    "version": "1.0.23",
     "orientation": "portrait",
     "scheme": "inclusivehealthmatch",
     "icon": "./assets/app-icon.png",
@@ -22,29 +22,37 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.inclusivehealthmatch.app",
-      "buildNumber": "4",
+      "bundleIdentifier": "com.audreydurrant.inclusivehealthmatch",
+      "buildNumber": "6",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "This app uses your photo library so you can upload a profile photo.",
-        "NSCameraUsageDescription": "This app may use your camera to capture a profile photo.",
-        "NSUserTrackingUsageDescription": "We use this identifier to support subscriptions and product analytics."
+        "NSPhotoLibraryUsageDescription": "We use your photo library to allow you to upload a profile picture for your provider or patient account.",
+        "NSCameraUsageDescription": "We use your camera to take a profile photo directly within the app.",
+        "NSUserTrackingUsageDescription": "We use your device’s advertising identifier (IDFA) to measure app performance, attribute subscriptions, and improve user experience through analytics.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "config": {
         "usesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.inclusivehealthmatch.app",
-      "versionCode": 4,
+      "package": "com.audreydurrant.inclusivehealthmatch",
+      "versionCode": 6,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#10B981"
-      }
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "runtimeVersion": "1.0.22",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
     "updates": {
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
@@ -54,7 +62,19 @@
     "extra": {
       "eas": {
         "projectId": "d20793fc-6318-471f-96a9-73ed69c0fd48"
-      }
-    }
+      },
+      "supabaseUrl": "https://ensispvuanpmqaelgyfz.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuc2lzcHZ1YW5wbXFhZWxneWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3MzY2NDksImV4cCI6MjA2NDMxMjY0OX0.V4TQtBJL1bmXzRt4s8nZO8_dmC2awqOJej1-MzFT4PE",
+      "authRedirectUrl": "inclusivehealthmatch://auth-callback",
+      "EXPO_PUBLIC_AUTH_REDIRECT_URL": "inclusivehealthmatch://auth-callback",
+      "EXPO_PUBLIC_SUPABASE_URL": "https://ensispvuanpmqaelgyfz.supabase.co",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuc2lzcHZ1YW5wbXFhZWxneWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3MzY2NDksImV4cCI6MjA2NDMxMjY0OX0.V4TQtBJL1bmXzRt4s8nZO8_dmC2awqOJej1-MzFT4PE"
+    },
+    "sdkVersion": "54.0.0",
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      "expo-secure-store"
+    ]
   }
 }

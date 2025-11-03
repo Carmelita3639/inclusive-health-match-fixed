@@ -34,7 +34,8 @@
       },
       "ios": {
         "simulator": false,
-        "autoIncrement": "buildNumber"
+        "autoIncrement": "buildNumber",
+        "resourceClass": "m-medium"
       }
     }
   },
@@ -42,12 +43,19 @@
     "production": {
       "android": {
         "serviceAccountKeyPath": "./android-service-account.json",
-        "track": "internal"
+        "track": "production",
+        "releaseStatus": "completed"
       },
       "ios": {
-        "appleId": "durranau@yahoo.com",
-        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID",
-        "appleTeamId": "YOUR_TEAM_ID"
+        "ascAppId": "6751308906",
+        "appleTeamId": "PV848L3HKL"
+      }
+    },
+    "internal": {
+      "android": {
+        "serviceAccountKeyPath": "./android-service-account.json",
+        "track": "internal",
+        "releaseStatus": "completed"
       }
     }
   }
