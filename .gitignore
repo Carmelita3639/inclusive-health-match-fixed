@@ -5,3 +5,12 @@ node_modules/
 .DS_Store
 ios/
 android/
+# 🔐 secrets
+android-service-account.json
+*.keystore
+*.jks
+*.p8
+*.pem
+.env
+.env.*
+/ios/Pods
