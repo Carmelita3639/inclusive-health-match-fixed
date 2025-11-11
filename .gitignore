@@ -14,3 +14,12 @@ android-service-account.json
 .env
 .env.*
 /ios/Pods
+
+# Secrets
+*.json
+*.env
+*.p8
+*.pem
+*.jks
+*.keystore
+
