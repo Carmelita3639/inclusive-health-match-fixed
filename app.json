@@ -8,18 +8,16 @@
     "scheme": "inclusivehealthmatch",
     "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "light",
+
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#10B981"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "platforms": [
-      "ios",
-      "android"
-    ],
+
+    "assetBundlePatterns": ["**/*"],
+    "platforms": ["ios", "android"],
+
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.audreydurrant.inclusivehealthmatch",
@@ -27,13 +25,23 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "We use your photo library to allow you to upload a profile picture for your provider or patient account.",
         "NSCameraUsageDescription": "We use your camera to take a profile photo directly within the app.",
-        "NSUserTrackingUsageDescription": "We use your device’s advertising identifier (IDFA) to measure app performance, attribute subscriptions, and improve user experience through analytics.",
-        "ITSAppUsesNonExemptEncryption": false
+        "NSUserTrackingUsageDescription": "We use your device's advertising identifier (IDFA) to measure app performance, attribute subscriptions, and improve user experience through analytics.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSExceptionDomains": {
+            "supabase.co": {
+              "NSIncludesSubdomains": true,
+              "NSExceptionAllowsInsecureHTTPLoads": false,
+              "NSExceptionRequiresForwardSecrecy": false,
+              "NSRequiresCertificateTransparency": false
+            }
+          }
+        }
       },
-      "config": {
-        "usesNonExemptEncryption": false
-      }
+      "config": { "usesNonExemptEncryption": false }
     },
+
     "android": {
       "package": "com.audreydurrant.inclusivehealthmatch",
       "versionCode": 6,
@@ -44,37 +52,41 @@
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET"
       ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
+
+    "web": { "favicon": "./assets/favicon.png" },
+
+    "runtimeVersion": { "policy": "sdkVersion" },
+
     "updates": {
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/d20793fc-6318-471f-96a9-73ed69c0fd48"
     },
+
     "extra": {
-      "eas": {
-        "projectId": "d20793fc-6318-471f-96a9-73ed69c0fd48"
-      },
-      "supabaseUrl": "https://ensispvuanpmqaelgyfz.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuc2lzcHZ1YW5wbXFhZWxneWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3MzY2NDksImV4cCI6MjA2NDMxMjY0OX0.V4TQtBJL1bmXzRt4s8nZO8_dmC2awqOJej1-MzFT4PE",
-      "authRedirectUrl": "inclusivehealthmatch://auth-callback",
-      "EXPO_PUBLIC_AUTH_REDIRECT_URL": "inclusivehealthmatch://auth-callback",
-      "EXPO_PUBLIC_SUPABASE_URL": "https://ensispvuanpmqaelgyfz.supabase.co",
-      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuc2lzcHZ1YW5wbXFhZWxneWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3MzY2NDksImV4cCI6MjA2NDMxMjY0OX0.V4TQtBJL1bmXzRt4s8nZO8_dmC2awqOJej1-MzFT4PE"
+      "eas": { "projectId": "d20793fc-6318-471f-96a9-73ed69c0fd48" },
+      "supabaseUrl": "https://ajowmbwaaropdijrozaa.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqb3dtYndhYXJvcGRpanJvemFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjM4MTMsImV4cCI6MjA3NzA5OTgxM30.edxAqXAbuTPHH4PGCwL6bJnUpegOiF4U9v33Xntc06Y",
+      "authRedirectUrl": "inclusivehealthmatch://auth-callback"
     },
+
     "sdkVersion": "54.0.0",
+
     "plugins": [
       "expo-asset",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "ios": { "useFrameworks": "static" }
+        }
+      ]
     ]
   }
 }

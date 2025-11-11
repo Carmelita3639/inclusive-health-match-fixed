@@ -1,4 +1,4 @@
-// screens/ClaimProfileScreen.js
+// js/screens/ClaimProfileScreen.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -9,7 +9,7 @@ const BLUE = '#2563EB';
 const GRAY_900 = '#111827';
 const GRAY_600 = '#4B5563';
 const GRAY_500 = '#6B7280';
-const GRAY_300 = '#D1D5DB';  // ✅ ADDED THIS LINE
+const GRAY_300 = '#D1D5DB';
 const GRAY_200 = '#E5E7EB';
 const BG = '#F7F8FA';
 
@@ -49,12 +49,12 @@ export default function ClaimProfileScreen({ route }) {
           <View style={styles.infoCard}>
             <Text style={styles.infoLabel}>Provider Information:</Text>
             
-            {provider?.full_name && (
+            {provider?.fullName && (
               <View style={styles.infoRow}>
                 <Ionicons name="person" size={18} color={GRAY_600} />
                 <Text style={styles.infoText}>
                   <Text style={styles.bold}>Name: </Text>
-                  {provider.full_name}
+                  {provider.fullName}
                 </Text>
               </View>
             )}
@@ -114,7 +114,7 @@ export default function ClaimProfileScreen({ route }) {
               <Text style={styles.stepNumberText}>3</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={steps.stepTitle}>Get Verified</Text>
+              <Text style={styles.stepTitle}>Get Verified</Text>
               <Text style={styles.stepText}>
                 Receive verification badge after review
               </Text>

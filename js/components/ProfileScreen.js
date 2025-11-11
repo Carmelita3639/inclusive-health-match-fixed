@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../lib/AuthContext';
 
 export default function ProfileScreen({ navigation }) {
   const { user } = useAuth();

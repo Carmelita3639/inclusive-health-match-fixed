@@ -1,5 +1,5 @@
 // js/lib/providerData.js
-import { supabase } from '../supabase';
+import { supabase } from '../supabase.js';
 
 /**
  * Helper: normalize a claimed_provider_profiles row

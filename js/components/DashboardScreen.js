@@ -1,259 +1,261 @@
 // js/components/DashboardScreen.js
-// Dashboard Home - routes to MainTabs with specific tabs
+// Real Dashboard - Matches your exact design
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
-  Alert,
+  StatusBar,
 } from 'react-native';
-import { useAuth } from '../AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import supabase from '../supabase';
 
 const GREEN = '#10B981';
-const BLUE = '#2563EB';
-const CARD = '#ffffff';
-const PREMIUM_GOLD = '#F59E0B';
+const BLUE = '#3B82F6';
+const DARK_TEXT = '#1F2937';
+const GRAY_TEXT = '#6B7280';
 
-export default function DashboardScreen({ navigation }) {
-  const { user, signOut, isPremium } = useAuth();
+export default function DashboardScreen() {
+  const navigation = useNavigation();
+  const [userEmail, setUserEmail] = useState('');
 
-  const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await signOut?.();
-          } catch (error) {
-            console.error('Logout error:', error);
-            Alert.alert('Error', 'Failed to sign out. Please try again.');
-          }
-        },
-      },
-    ]);
-  };
-
-  const handlePremiumAction = () => {
-    if (isPremium) {
-      Alert.alert(
-        'Premium Active',
-        'You have full access to all premium features! Enjoy unlimited provider matches and advanced filtering.',
-        [{ text: 'Continue' }]
-      );
-    } else {
-      Alert.alert('Premium', 'Upgrade flow coming soon in this build.');
-    }
-  };
-
-  // ✅ Navigate into MainTabs and select the target tab
-  const navigateToTab = (tabName, nestedScreen = null) => {
-    navigation.navigate('MainTabs', {
-      screen: tabName,
-      ...(nestedScreen ? { params: { screen: nestedScreen } } : {}),
-    });
-  };
+  useEffect(() => {
+    // Get current user email
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    getUser();
+  }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Top banner */}
-        <View style={[styles.topCard, isPremium && styles.premiumTopCard]}>
-          <Text style={styles.topTitle}>Inclusive Health Match</Text>
-          <Text style={styles.topEmail}>
-            {user?.email ?? 'carmelita3639@gmail.com'}
-          </Text>
-          {isPremium && (
-            <View style={styles.premiumBadge}>
-              <Text style={styles.premiumBadgeText}>✨ PREMIUM</Text>
-            </View>
-          )}
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Inclusive Health Match</Text>
+          <Text style={styles.headerEmail}>{userEmail || 'Loading...'}</Text>
         </View>
 
-        {/* Find Physicians */}
+        {/* Find Physicians Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Find Physicians</Text>
-          <Text style={styles.cardDesc}>
+          <Text style={styles.cardDescription}>
             Connect with culturally competent healthcare providers
           </Text>
           <TouchableOpacity
-            style={styles.ctaGreen}
-            onPress={() => navigateToTab('ProviderTab', 'ProviderSearch')}
+            style={styles.greenButton}
+            onPress={() => navigation.navigate('ProviderSearch')}
           >
-            <Text style={styles.ctaText}>Search Now</Text>
+            <Text style={styles.buttonText}>Search Now</Text>
           </TouchableOpacity>
         </View>
 
-        {/* AI Match Chat */}
+        {/* AI Match Chat Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>AI Match Chat</Text>
-          <Text style={styles.cardDesc}>
+          <Text style={styles.cardDescription}>
             Get personalized physician recommendations using AI
           </Text>
           <TouchableOpacity
-            style={styles.ctaGreen}
-            onPress={() => navigateToTab('AiMatchTab')}
+            style={styles.greenButton}
+            onPress={() => navigation.navigate('AiMatchChat')}
           >
-            <Text style={styles.ctaText}>Start AI Match</Text>
+            <Text style={styles.buttonText}>Start AI Match</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Cultural Calendar */}
+        {/* Cultural Calendar Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Cultural Calendar</Text>
-          <Text style={styles.cardDesc}>
+          <Text style={styles.cardDescription}>
             Explore holidays and observances that reflect your identity
           </Text>
           <TouchableOpacity
-            style={styles.ctaGreen}
-            onPress={() => navigateToTab('CalendarTab')}
+            style={styles.greenButton}
+            onPress={() => navigation.navigate('CulturalCalendar')}
           >
-            <Text style={styles.ctaText}>View Calendar</Text>
+            <Text style={styles.buttonText}>View Calendar</Text>
           </TouchableOpacity>
         </View>
 
-        {/* My Profile */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>My Profile</Text>
-          <Text style={styles.cardDesc}>
-            Manage your health profile and preferences
+        {/* Premium Features Card - BLUE */}
+        <View style={styles.premiumCard}>
+          <Text style={styles.cardTitle}>Premium Features</Text>
+          <Text style={styles.cardDescription}>
+            Upgrade to unlock unlimited matches and advanced features
           </Text>
           <TouchableOpacity
-            style={styles.ctaGreen}
-            onPress={() => navigateToTab('ProfileTab')}
+            style={styles.blueButton}
+            onPress={() => navigation.navigate('PremiumSubscription')}
           >
-            <Text style={styles.ctaText}>Edit Profile</Text>
+            <Text style={styles.buttonText}>Upgrade to Premium</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Premium Card */}
-        <View
-          style={[
-            styles.card,
-            isPremium ? styles.premiumActiveCard : styles.premiumWrap,
-          ]}
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* Bottom Navigation Bar */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('Dashboard')}
         >
-          <Text style={styles.cardTitle}>
-            {isPremium ? 'Premium Features Active' : 'Premium Features'}
-          </Text>
-          <Text style={styles.cardDesc}>
-            {isPremium
-              ? 'You have unlimited access to all advanced features and priority support.'
-              : 'Upgrade to unlock unlimited matches and advanced features'}
-          </Text>
-          <TouchableOpacity
-            style={isPremium ? styles.ctaGreen : styles.ctaBlue}
-            onPress={handlePremiumAction}
-          >
-            <Text style={styles.ctaText}>
-              {isPremium ? 'Manage Premium' : 'Upgrade to Premium'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Logout */}
-        <TouchableOpacity style={styles.logout} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={styles.navIcon}>🏠</Text>
+          <Text style={[styles.navLabel, styles.navLabelActive]}>Home</Text>
         </TouchableOpacity>
 
-        <View style={{ height: 80 }} />
-      </ScrollView>
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('ProviderSearch')}
+        >
+          <Text style={styles.navIcon}>🔍</Text>
+          <Text style={styles.navLabel}>Provider</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('AiMatchChat')}
+        >
+          <Text style={styles.navIcon}>💬</Text>
+          <Text style={styles.navLabel}>AI Match</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <Text style={styles.navIcon}>👤</Text>
+          <Text style={styles.navLabel}>Profile</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('CulturalCalendar')}
+        >
+          <Text style={styles.navIcon}>📅</Text>
+          <Text style={styles.navLabel}>Calendar</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
 
-/* -------------------- Styles -------------------- */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F6FA' },
-  scroll: { paddingBottom: 24 },
-
-  topCard: {
+  safe: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+  },
+  container: {
+    flex: 1,
+  },
+  header: {
     backgroundColor: GREEN,
-    margin: 16,
-    marginTop: 12,
-    borderRadius: 12,
-    padding: 16,
-    position: 'relative',
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    marginBottom: 20,
   },
-  premiumTopCard: { backgroundColor: PREMIUM_GOLD },
-  topTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '800',
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     textAlign: 'center',
+    marginBottom: 8,
   },
-  topEmail: {
-    color: '#E7FFF7',
-    fontSize: 12,
+  headerEmail: {
+    fontSize: 16,
+    color: '#FFFFFF',
     textAlign: 'center',
-    marginTop: 6,
+    opacity: 0.9,
   },
-  premiumBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  premiumBadgeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
-
   card: {
-    backgroundColor: CARD,
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 12,
-    padding: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  premiumWrap: {
-    borderWidth: 1,
-    borderColor: '#2563EB55',
-    backgroundColor: '#EFF6FF',
-  },
-  premiumActiveCard: {
+  premiumCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
     borderWidth: 2,
-    borderColor: PREMIUM_GOLD,
-    backgroundColor: '#FFFBEB',
+    borderColor: BLUE,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 6,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: DARK_TEXT,
+    marginBottom: 8,
   },
-  cardDesc: { fontSize: 13, color: '#6B7280', marginBottom: 10 },
-  ctaGreen: {
+  cardDescription: {
+    fontSize: 15,
+    color: GRAY_TEXT,
+    marginBottom: 16,
+    lineHeight: 22,
+  },
+  greenButton: {
     backgroundColor: GREEN,
-    borderRadius: 10,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
   },
-  ctaBlue: {
+  blueButton: {
     backgroundColor: BLUE,
-    borderRadius: 10,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
   },
-  ctaText: { color: '#fff', fontWeight: '700' },
-
-  logout: {
-    margin: 16,
-    marginTop: 20,
-    backgroundColor: '#EF4444',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '700',
   },
-  logoutText: { color: '#fff', fontWeight: '700' },
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 8,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  navItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  navIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  navLabel: {
+    fontSize: 11,
+    color: GRAY_TEXT,
+    fontWeight: '600',
+  },
+  navLabelActive: {
+    color: BLUE,
+  },
 });

@@ -6,42 +6,65 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Image,
+  Alert,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ScrollView,
-  Image,
+  StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../AuthContext';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { supabase, assertSupabaseReachable } from '../supabase'; // correct relative path
 
 const GREEN = '#10B981';
-const TEXT = '#0B1221';
-const MUTED = '#6B7280';
-const INPUT_BG = '#E9D5FF';
-const INPUT_BORDER = '#E2E8F0';
+const NAVY = '#1F2937';
+const INPUT_BG = '#EFE7FB';
+const INPUT_BORDER = '#D6CCE9';
 
 export default function LoginScreen({ navigation }) {
-  const { signIn } = useAuth();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const onSignIn = async () => {
-    if (!email.trim() || !password) {
+  const onLogin = async () => {
+    if (!email || !password) {
       Alert.alert('Missing info', 'Please enter both email and password.');
       return;
     }
+
     setBusy(true);
     try {
-      const res = await signIn(email.trim(), password);
-      if (res?.success) {
-        navigation.replace('Dashboard');
-      } else {
-        Alert.alert('Sign in failed', res?.error || 'Invalid credentials.');
+      // 1) Prove the device can reach Supabase (separates transport vs. auth)
+      await assertSupabaseReachable();
+
+      // 2) Sign in with email + password
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (error) {
+        Alert.alert('Login failed', error.message);
+        return;
       }
-    } catch (err) {
-      Alert.alert('Error', err?.message || 'Something went wrong.');
+
+      // 3) Navigate to Dashboard (and prevent going back to Login)
+      if (navigation?.reset) {
+        navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
+      } else {
+        Alert.alert(
+          'Logged in',
+          'Navigation stack not available. Make sure LoginScreen is inside a Stack Navigator.'
+        );
+      }
+    } catch (e) {
+      // Transport/DNS/TLS/VPN/ATS errors typically surface here
+      const msg = typeof e?.message === 'string' ? e.message : String(e);
+      Alert.alert(
+        'Login failed',
+        `Network/transport error while reaching Supabase.\n\n${msg}\n\nIf on iOS simulator, check VPN/Proxy/ATS and try again.`
+      );
     } finally {
       setBusy(false);
     }
@@ -49,80 +72,93 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top, 20) }]}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
-          {/* Logo Only */}
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('../../assets/app-icon.png')}
-              style={styles.logo}
-              resizeMode="contain"
+          {/* Logo */}
+          <Image
+            source={require('../../assets/login-banner.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+
+          {/* Brand */}
+          <Text style={styles.inclusive}>INCLUSIVE</Text>
+          <Text style={styles.healthMatch}>HEALTH MATCH</Text>
+          <Text style={styles.welcome}>Welcome</Text>
+
+          {/* Email */}
+          <View style={styles.inputWrap}>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Email"
+              placeholderTextColor="#9CA3AF"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              style={styles.input}
+              returnKeyType="next"
+              editable={!busy}
+              accessibilityLabel="Email"
             />
           </View>
 
-          {/* Titles */}
-          <View style={styles.titles}>
-            <Text style={styles.h1}>INCLUSIVE</Text>
-            <Text style={[styles.h1, { color: GREEN }]}>HEALTH MATCH</Text>
-            <Text style={styles.tagline}>Find culturally competent Healthcare</Text>
-            <Text style={styles.welcome}>Welcome</Text>
+          {/* Password */}
+          <View style={styles.inputWrap}>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry
+              style={styles.input}
+              returnKeyType="done"
+              onSubmitEditing={onLogin}
+              editable={!busy}
+              accessibilityLabel="Password"
+            />
           </View>
 
-          {/* Input Fields */}
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#8B5C70"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-            returnKeyType="next"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#8B5C70"
-            autoCapitalize="none"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            returnKeyType="done"
-            onSubmitEditing={onSignIn}
-          />
-
-          {/* Login Button */}
+          {/* Login */}
           <TouchableOpacity
-            style={[styles.primaryBtn, busy && { opacity: 0.7 }]}
-            onPress={onSignIn}
+            style={[styles.loginBtn, busy && styles.btnDisabled]}
+            activeOpacity={0.85}
+            onPress={onLogin}
             disabled={busy}
           >
-            <Text style={styles.primaryText}>{busy ? 'Signing in…' : 'Login'}</Text>
+            <Text style={styles.loginText}>{busy ? 'Loading…' : 'Login'}</Text>
           </TouchableOpacity>
 
-          {/* Links */}
+          {/* Forgot Password */}
           <TouchableOpacity
-            onPress={() => Alert.alert('Coming Soon', 'Forgot password feature coming soon!')}
+            onPress={() => navigation?.navigate?.('ForgotPassword')}
+            activeOpacity={0.7}
+            style={styles.forgotButton}
+            disabled={busy}
           >
-            <Text style={styles.linkStrong}>FORGOT YOUR PASSWORD?</Text>
+            <Text style={styles.forgot}>FORGOT YOUR PASSWORD?</Text>
           </TouchableOpacity>
 
-          <Text style={styles.smallMuted}>
-            DON'T HAVE AN ACCOUNT?{' '}
-            <Text
-              style={styles.strongLink}
-              onPress={() => Alert.alert('Coming Soon', 'Sign up feature coming soon!')}
+          {/* Sign Up */}
+          <View style={styles.signupRow}>
+            <Text style={styles.signupPrefix}>DON'T HAVE AN ACCOUNT? </Text>
+            <TouchableOpacity
+              onPress={() => navigation?.navigate?.('Register')}
+              activeOpacity={0.7}
+              disabled={busy}
             >
-              SIGN UP
-            </Text>
-          </Text>
+              <Text style={styles.signupLink}>SIGN UP</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -132,75 +168,56 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFFFFF' },
   flex: { flex: 1 },
-  content: { padding: 20, alignItems: 'center' },
-
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: 30,
-    marginBottom: 10,
-  },
-  logo: {
-    width: 300,
-    height: 130,
-  },
-
-  titles: { alignItems: 'center', marginTop: 12 },
-  h1: {
-    fontSize: 32,
+  container: { paddingHorizontal: 32, alignItems: 'center' },
+  logo: { width: '75%', height: 120, marginTop: 10, marginBottom: 20 },
+  inclusive: {
+    fontSize: 36,
     fontWeight: '900',
-    color: TEXT,
-    textAlign: 'center',
+    color: '#000',
     letterSpacing: 0.5,
-    lineHeight: 36,
-  },
-  tagline: {
-    marginTop: 8,
-    color: MUTED,
-    fontSize: 15,
-    fontWeight: '500',
     textAlign: 'center',
   },
-  welcome: {
-    marginTop: 14,
-    fontSize: 22,
+  healthMatch: {
+    fontSize: 36,
     fontWeight: '900',
-    color: TEXT,
-  },
-
-  input: {
-    alignSelf: 'stretch',
-    backgroundColor: INPUT_BG,
-    borderWidth: 1,
-    borderColor: INPUT_BORDER,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginTop: 14,
-    fontSize: 16,
-    color: TEXT,
-  },
-
-  primaryBtn: {
-    alignSelf: 'stretch',
-    backgroundColor: GREEN,
-    borderRadius: 999,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  primaryText: { color: '#FFFFFF', fontWeight: '800', fontSize: 18 },
-
-  linkStrong: {
-    marginTop: 16,
     color: GREEN,
-    fontWeight: '900',
-    fontSize: 14,
-  },
-  smallMuted: {
-    marginTop: 10,
-    color: MUTED,
-    fontSize: 12,
+    letterSpacing: 0.5,
     textAlign: 'center',
+    marginTop: -4,
+    marginBottom: 16,
   },
-  strongLink: { color: GREEN, fontWeight: '900' },
+  welcome: { fontSize: 28, fontWeight: '800', color: NAVY, textAlign: 'center', marginBottom: 16 },
+  inputWrap: { width: '100%', marginBottom: 16 },
+  input: {
+    width: '100%',
+    backgroundColor: INPUT_BG,
+    borderColor: INPUT_BORDER,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#111827',
+  },
+  loginBtn: {
+    width: '100%',
+    backgroundColor: GREEN,
+    borderRadius: 25,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  btnDisabled: { opacity: 0.6 },
+  loginText: { color: '#FFF', fontSize: 18, fontWeight: '800' },
+  forgotButton: { marginTop: 24, marginBottom: 8 },
+  forgot: { color: GREEN, fontSize: 14, fontWeight: '700', textAlign: 'center', textDecorationLine: 'underline' },
+  signupRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
+  signupPrefix: { color: NAVY, fontSize: 14, fontWeight: '700' },
+  signupLink: { color: GREEN, fontSize: 14, fontWeight: '700', textDecorationLine: 'underline' },
 });

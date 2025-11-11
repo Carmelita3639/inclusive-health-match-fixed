@@ -1,0 +1,26 @@
+// js/shims/location.js
+// Create a safe global/window.location.origin for RN (Hermes) without expo-linking.
+
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+
+if (Platform.OS !== 'web') {
+  // Read the scheme from app.json/expo.experience (SDK 54 exposes via expoConfig)
+  const scheme =
+    Constants?.expoConfig?.scheme ||
+    Constants?.manifest2?.extra?.expoClient?.scheme || // legacy fallbacks
+    'app';
+
+  const origin = `${scheme}://`;
+
+  const g = globalThis ?? global;
+  if (!g.window) g.window = {};
+  if (!g.global) g.global = g;
+
+  const ensure = (host) => {
+    if (!host.location) host.location = { origin };
+    else if (!host.location.origin) host.location.origin = origin;
+  };
+  ensure(g);
+  ensure(g.window);
+}

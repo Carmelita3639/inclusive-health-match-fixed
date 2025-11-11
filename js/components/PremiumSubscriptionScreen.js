@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import RevenueCatService from '../../revenuecat';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../lib/AuthContext';
 
 const PremiumSubscriptionScreen = ({ navigation }) => {
   // If your AuthContext exposes isPremium, we’ll display it.

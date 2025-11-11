@@ -12,7 +12,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { supabase } from '../js/supabase';
+import { supabase } from '../supabase.js';
 import { getProviderByNpi } from '../js/lib/providerData';
 
 // --- colors reused ---

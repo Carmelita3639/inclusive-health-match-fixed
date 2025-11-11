@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../lib/AuthContext';
 
 const SignUpScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
