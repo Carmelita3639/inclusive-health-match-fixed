@@ -51,25 +51,30 @@ target 'InclusiveHealthMatch' do
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
 
-  # --- Ensure the vendored podspec exists and is resolvable on EAS ---
+  # --- Ensure the vendored podspec is resolvable on EAS ---
   vendored_podspec = File.join(__dir__, 'ReactAppDependencyProvider.podspec')
-  unless File.exist?(vendored_podspec)
-    Pod::UI.puts "⚠️  Missing ReactAppDependencyProvider.podspec — creating stub for build environment..."
-    File.write(vendored_podspec, <<~SPEC)
-      Pod::Spec.new do |s|
-        s.name         = 'ReactAppDependencyProvider'
-        s.version      = '1.0.0'
-        s.summary      = 'Stub provider required by expo-dev-launcher on RN 0.76'
-        s.source       = { :path => '.' }
-        s.authors      = { 'Inclusive Health Match' => 'build@inclusivehealthmatch.com' }
-        s.platform     = :ios, '13.0'
-        s.source_files = 'ReactAppDependencyProvider/**/*.{h,m}'
-      end
-    SPEC
+
+  pre_install do |installer|
+    if File.exist?(vendored_podspec)
+      Pod::UI.puts "✔ Found local podspec at: #{vendored_podspec}"
+    else
+      Pod::UI.warn "✖ Missing local podspec at: #{vendored_podspec} — creating stub..."
+      File.write(vendored_podspec, <<~SPEC)
+        Pod::Spec.new do |s|
+          s.name         = 'ReactAppDependencyProvider'
+          s.version      = '1.0.0'
+          s.summary      = 'Stub provider required by expo-dev-launcher on RN 0.76'
+          s.source       = { :path => '.' }
+          s.authors      = { 'Inclusive Health Match' => 'build@inclusivehealthmatch.com' }
+          s.platform     = :ios, '13.0'
+          s.source_files = 'ReactAppDependencyProvider/**/*.{h,m}'
+        end
+      SPEC
+    end
   end
 
-  # Resolve via absolute path so CocoaPods/EAS never miss it
-  pod 'ReactAppDependencyProvider', :path => vendored_podspec
+  # ✅ Use explicit podspec path (not relative pod path)
+  pod 'ReactAppDependencyProvider', :podspec => vendored_podspec
 
   post_install do |installer|
     react_native_post_install(
