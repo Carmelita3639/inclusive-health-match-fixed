@@ -59,7 +59,7 @@
 
     "web": { "favicon": "./assets/favicon.png" },
 
-    "runtimeVersion": { "policy": "sdkVersion" },
+    "runtimeVersion": "1.0.0",
 
     "updates": {
       "enabled": true,
