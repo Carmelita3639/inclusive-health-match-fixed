@@ -1,12 +1,24 @@
-ios/**
+# ===================================================
+# ✅ Inclusive Health Match — EAS Ignore Configuration
+# Ensures iOS build files + vendored pods are included
+# ===================================================
+
+# Ignore build artifacts and logs
 android/**
 .expo/**
 *.log
-
-# ignore editor backups
 *.bak
 
-# ignore editor backups
-*.bak
+# ✅ DO NOT exclude entire ios directory (critical!)
+# ios/**   ← remove or comment out this line if present
 
-*.bak
+# ✅ Explicitly include vendored pod + podspec files
+!ios/ReactAppDependencyProvider/**
+!ios/ReactAppDependencyProvider.podspec
+!**/*.podspec
+
+# Keep Podfile & Xcode projects
+!ios/Podfile
+!ios/Podfile.lock
+!ios/InclusiveHealthMatch.xcodeproj/**
+!ios/InclusiveHealthMatch.xcworkspace/**

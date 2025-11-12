@@ -50,8 +50,18 @@ target 'InclusiveHealthMatch' do
   )
 
   # ✅ Static vendored pod for expo-dev-launcher dependency
-  pod 'ReactAppDependencyProvider',
-      :path => File.join(__dir__, 'ReactAppDependencyProvider')
+  pod 'ReactAppDependencyProvider', :path => './ReactAppDependencyProvider'
+
+  # ✅ Debug check to confirm presence of podspec before build
+  pre_install do |installer|
+    spec_path = File.join(__dir__, 'ReactAppDependencyProvider', 'ReactAppDependencyProvider.podspec')
+    Pod::UI.puts "🔍 Checking for ReactAppDependencyProvider podspec..."
+    if File.exist?(spec_path)
+      Pod::UI.puts "✅ Found local ReactAppDependencyProvider podspec at #{spec_path}"
+    else
+      Pod::UI.puts "⚠️ Missing ReactAppDependencyProvider podspec at #{spec_path} — check .easignore"
+    end
+  end
 
   post_install do |installer|
     react_native_post_install(
