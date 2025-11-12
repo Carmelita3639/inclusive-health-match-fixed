@@ -1,25 +1,28 @@
-ios/
-android/
+# Node / Expo
 node_modules/
 .expo/
+.expo-shared/
 .DS_Store
-ios/
-android/
-# 🔐 secrets
+dist/
+npm-debug.log*
+yarn-error.log*
+
+# iOS — keep the project, ignore only artifacts
+ios/Pods/
+ios/build/
+ios/DerivedData/
+
+# Android — keep the project, ignore only artifacts
+android/.gradle/
+android/app/build/
+android/build/
+
+# 🔐 Secrets
 android-service-account.json
 *.keystore
 *.jks
 *.p8
 *.pem
-.env
-.env.*
-/ios/Pods
-
-# Secrets
-*.json
 *.env
-*.p8
-*.pem
-*.jks
-*.keystore
-
+*.env.*
+*.json
