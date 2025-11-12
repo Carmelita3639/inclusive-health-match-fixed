@@ -7,6 +7,7 @@ require 'json'
 podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
 
 def ccache_enabled?(podfile_properties)
+  # Allow ccache toggle via env or Podfile property
   return ENV['USE_CCACHE'] == '1' if ENV['USE_CCACHE']
   podfile_properties['apple.ccacheEnabled'] == 'true'
 end
@@ -43,57 +44,21 @@ target 'InclusiveHealthMatch' do
 
   use_react_native!(
     :path => config[:reactNativePath],
-    :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
+    :hermes_enabled => podfile_properties['expo.jsEngine'].nil? || podfile_properties['expo.jsEngine'] == 'hermes',
     :app_path => "#{Pod::Config.instance.installation_root}/..",
-    :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
+    :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false'
   )
 
-  # --- Ensure the vendored pod exists (directory with podspec + stub) ---
-  vendored_dir = File.join(__dir__, 'ReactAppDependencyProvider')
-  vendored_spec = File.join(vendored_dir, 'ReactAppDependencyProvider.podspec')
-  vendored_src = File.join(vendored_dir, 'ReactAppDependencyProviderStub.m')
-
-  pre_install do |installer|
-    FileUtils.mkdir_p(vendored_dir) unless Dir.exist?(vendored_dir)
-
-    unless File.exist?(vendored_src)
-      File.write(vendored_src, <<~SRC)
-        #import <Foundation/Foundation.h>
-        @interface ReactAppDependencyProviderStub : NSObject @end
-        @implementation ReactAppDependencyProviderStub @end
-      SRC
-    end
-
-    unless File.exist?(vendored_spec)
-      Pod::UI.puts "⚠️ Creating local ReactAppDependencyProvider.podspec in #{vendored_dir}"
-      File.write(vendored_spec, <<~SPEC)
-        Pod::Spec.new do |s|
-          s.name         = 'ReactAppDependencyProvider'
-          s.version      = '1.0.0'
-          s.summary      = 'Stub provider required by expo-dev-launcher on RN 0.76'
-          s.homepage     = 'https://reactnative.dev'
-          s.license      = { :type => 'MIT' }
-          s.authors      = { 'Inclusive Health Match' => 'build@inclusivehealthmatch.com' }
-          s.platform     = :ios, '13.0'
-          s.source       = { :path => '.' }
-          s.source_files = '**/*.{h,m}'
-          s.requires_arc = true
-        end
-      SPEC
-    end
-
-    Pod::UI.puts "✔ Using local ReactAppDependencyProvider at: #{vendored_dir}"
-  end
-
-  # ✅ Reference the pod by directory (CocoaPods finds the podspec inside)
-  pod 'ReactAppDependencyProvider', :path => vendored_dir
+  # ✅ Static vendored pod for expo-dev-launcher dependency
+  pod 'ReactAppDependencyProvider',
+      :path => File.join(__dir__, 'ReactAppDependencyProvider')
 
   post_install do |installer|
     react_native_post_install(
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
-      :ccache_enabled => ccache_enabled?(podfile_properties),
+      :ccache_enabled => ccache_enabled?(podfile_properties)
     )
   end
 end
